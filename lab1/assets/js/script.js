@@ -2,6 +2,10 @@ let name="BookStore"
 let version=1
 let indexSn
 let ul = document.getElementById("bookList");
+let div=document.getElementById("bookViewer")
+let p1 = document.createElement('p');
+let p2 = document.createElement('p');
+let p3 = document.createElement('p');
 document.getElementById("addButton").addEventListener("click",function () {
 addBook()
 })
@@ -20,6 +24,7 @@ document.getElementById("deleteButton").addEventListener("click",function (e) {
     else if(id.length>0) deleteID(id)
     else alert("please enter id or sn")
 })
+
 
 let db
 function startConnect() {
@@ -40,7 +45,6 @@ function startConnect() {
     }
 }
 function addBook() {
-    console.log("add")
     let transaction = db.transaction("books", "readwrite");
     let books = transaction.objectStore("books");
     let book = {
@@ -48,15 +52,17 @@ function addBook() {
         sn: document.getElementById("bookSn").value,
         year: document.getElementById("bookYear").value
     };
-    let request = books.add(book);
-    request.onsuccess = function() {
-        alert("Book Added Successfully")
-        getAll()
+    if(!validateBookData(book)){
+        let request = books.add(book);
+        request.onsuccess = function() {
+            alert("Book Added Successfully")
+            getAll()
 
-    };
-    request.onerror = function() {
-        console.log("Error", request.error);
-    };
+        };
+        request.onerror = function() {
+            console.log("Error", request.error);
+        };
+    }
 }
 
 function setHtml() {
@@ -65,9 +71,16 @@ function setHtml() {
         ul.removeChild(li[0]);
     }
 }
+function setViewer() {
+    let p = div.getElementsByTagName("p")
+    while(p.length > 0) {
+        div.removeChild(p[0]);
+    }
+}
 
 function getAll(){
     setHtml()
+    setViewer()
     let transaction = db.transaction("books","readonly");
     let books = transaction.objectStore("books");
     let request = books.openCursor();
@@ -79,7 +92,16 @@ function getAll(){
             console.log(value);
             let li = document.createElement('li');
             ul.appendChild(li);
-            li.innerHTML="Title : "+value.title+" Serial Number : "+value.sn+" id: "+value.id
+            li.innerHTML=value.title
+            li.onmousedown=ev =>{
+                setViewer()
+                div.appendChild(p1)
+                p1.innerHTML="id : "+value.id
+                div.appendChild(p2)
+                p2.innerHTML="title : "+value.title
+                div.appendChild(p3)
+                p3.innerHTML="serial number : "+value.sn
+            }
             cursor.continue();
         }
     };
@@ -89,6 +111,7 @@ function deleteAll(){
     let transaction = db.transaction("books", "readwrite");
     let books = transaction.objectStore("books");
     books.clear();
+    setViewer()
 }
 function deleteID(id){
     console.log(id)
@@ -101,6 +124,7 @@ function deleteID(id){
     request.onerror=function () {
         alert("Id not exist")
     }
+    setViewer()
 }
 function deleteSN(sn){
     console.log("deletesn")
@@ -117,6 +141,7 @@ function deleteSN(sn){
     request.onerror=function () {
         alert("serial number not exist")
     }
+    setViewer()
 }
 startConnect()
 
